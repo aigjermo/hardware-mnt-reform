@@ -4,22 +4,9 @@ let
   linux = linux_6_1;
   reformKernel = fetchgit {
     url = "https://source.mnt.re/reform/reform-debian-packages.git";
-    rev = "503590cbdd5d3a7aea90bf35c1601a6b598edb78";
-    sha256 = "sha256-1e5ZeGQmUQyu8g+GGdG2jCRS9OJC7MAfnNectYrPJgg=";
+    rev = "f5d832b5056644177dd0f1ec22bc8000f327a59d";
+    sha256 = "sha256-gpekrGKD/dpDNPA2rOzEnM1wcFP14bgk7Dpqe6B/tAM=";
   } + "/linux";
-  kernelConfig = stdenv.mkDerivation {
-    name = "kernel-config";
-    src = reformKernel;
-    buildPhase = ''
-      cp $src/config kernel-config
-      sed -i 's/CONFIG_//' kernel-config
-      sed -i 's/=/ /' kernel-config
-    '';
-    installPhase = ''
-      mkdir -p $out
-      cp kernel-config $out/kernel-config
-    '';
-  };
 in lib.overrideDerivation (buildLinux (args // {
   inherit (linux) src version;
 
@@ -29,13 +16,13 @@ in lib.overrideDerivation (buildLinux (args // {
   } // (args.features or { });
 
   kernelPatches = let
-    patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches";
+    patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches6.1";
     reformPatches = map (patch: { inherit patch; }) patches;
   in lib.lists.unique (kernelPatches ++ reformPatches ++ [
     {
       name = "MNT-Reform-imx8mq-config-upstream";
       patch = null;
-      extraConfig = builtins.readFile "${kernelConfig}/kernel-config";
+      extraConfig = builtins.readFile ./kernel-config;
     }
   ]);
 

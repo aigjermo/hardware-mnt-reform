@@ -2,11 +2,11 @@
 
 buildUBoot rec {
   pname = "uboot-reform2-imx8mq";
-  version = "2023-01-25";
+  version = "2023-10-18";
   src = fetchgit {
     url = "https://source.mnt.re/reform/reform-boundary-uboot.git";
     rev = version;
-    sha256 = "sha256-oRZOhXwfjwaq+i+FqJ+QOuQZyoRgLNC30oN7wh2Lxak=";
+    sha256 = "sha256-IVUEN0uxfveiOgWCobOQrQvWHPbVSueb/m743GtsOwQ=";
   };
   defconfig = "nitrogen8m_som_4g_defconfig";
   extraMeta.platforms = [ "aarch64-linux" ];
