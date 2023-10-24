@@ -30,13 +30,13 @@ Requires an aarch64 host and Nix with [flake support](https://www.tweag.io/blog/
 
 ## Describe
 ```
-nix flake show "github:nix-community/hardware-mnt-reform"
-nix flake list-inputs "github:nix-community/hardware-mnt-reform"
+nix flake show "git+https://codeberg.org/lykso/hardware-mnt-reform"
+nix flake list-inputs "git+https://codeberg.org/lykso/hardware-mnt-reform"
 ```
 
 ## Build
 ```
-nix build "github:nix-community/hardware-mnt-reform" -L
+nix build "git+https://codeberg.org/lykso/hardware-mnt-reform" -L
 readlink result
 ```
 
@@ -115,7 +115,7 @@ Prepare partitions:
 
 Flash bootloader:
 ```
-  nix build "github:nix-community/hardware-mnt-reform#ubootReformImx8mq
+  nix build "git+https://codeberg.org/lykso/hardware-mnt-reform#ubootReformImx8mq
   echo 0 > /sys/class/block/mmcblk0boot0/force_ro
   dd if=result/flash.bin of=/dev/mmcblk0boot0 bs=1024 seek=33
 ```
@@ -135,7 +135,7 @@ nixos-generate-config --root /mnt
 
       inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
-        reform.url = "github:nix-community/hardware-mnt-reform";
+        reform.url = "git+https://codeberg.org/lykso/hardware-mnt-reform";
       };
 
       outputs = { self, nixpkgs, reform }: {
@@ -173,7 +173,7 @@ For more information see the  [NixOS manual](https://nixos.org/manual/nixos/stab
     nixos-rebuild switch --recreate-lock-file --verbose --impure --flake /etc/nixos#reform
 
     # in case there is new u-boot
-    nix build "github:nix-community/hardware-mnt-reform#ubootReformImx8mq"
+    nix build "git+https://codeberg.org/lykso/hardware-mnt-reform#ubootReformImx8mq"
     echo 0 > /sys/class/block/mmcblk0boot0/force_ro
     dd if=result/flash.bin of=/dev/mmcblk0boot0 bs=1024 seek=33
   ```
@@ -192,14 +192,14 @@ For more information see the  [NixOS manual](https://nixos.org/manual/nixos/stab
 
 Flash the stock keyboard firmware (assuming the keyboard is in programming mode):
 ```
-doas nix run "github:nix-community/hardware-mnt-reform#reform2-keyboard-fw" -L
+doas nix run "git+https://codeberg.org/lykso/hardware-mnt-reform#reform2-keyboard-fw" -L
 ```
 
 Override the keyboard layout:
 ```
 let
   hardware-mnt-reform =
-    builtins.getFlake "github:nix-community/hardware-mnt-reform";
+    builtins.getFlake "git+https://codeberg.org/lykso/hardware-mnt-reform";
 in {
   reform2-keyboard-fw =
     hardware-mnt-reform.packages.aarch64-linux.reform2-keyboard-fw.overrideAttrs
@@ -211,7 +211,7 @@ in {
 
 Build and flash:
 ```
-nix build  "github:nix-community/hardware-mnt-reform#reform2-lpc-fw-«your-board-rev»" -L
+nix build  "git+https://codeberg.org/lykso/hardware-mnt-reform#reform2-lpc-fw-«your-board-rev»" -L
 mount «board-rom» /mnt
 dd if=result/firmware.bin of="/mnt/firmware.bin" conv=nocreat,notrunc
 umount /mnt
