@@ -134,7 +134,7 @@ nixos-generate-config --root /mnt
       description = "Configuration for MNT Reform";
 
       inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
         reform.url = "git+https://codeberg.org/lykso/hardware-mnt-reform";
       };
 
