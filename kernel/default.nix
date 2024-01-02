@@ -1,7 +1,7 @@
-{ stdenv, lib, buildLinux, fetchurl, fetchgit, linux_6_1, kernelPatches, ... }@args:
+{ stdenv, lib, buildLinux, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
 
 let
-  linux = linux_6_1;
+  inherit linux;
   reformKernel = fetchgit {
     url = "https://source.mnt.re/reform/reform-debian-packages.git";
     rev = "f5d832b5056644177dd0f1ec22bc8000f327a59d";
