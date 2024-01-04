@@ -4,8 +4,8 @@ let
   inherit linux;
   reformKernel = fetchgit {
     url = "https://source.mnt.re/reform/reform-debian-packages.git";
-    rev = "f5d832b5056644177dd0f1ec22bc8000f327a59d";
-    sha256 = "sha256-gpekrGKD/dpDNPA2rOzEnM1wcFP14bgk7Dpqe6B/tAM=";
+    rev = "d4bbc527b264a4cc7fefb20ee2459c84a2154c3c";
+    sha256 = "sha256-tOZbZv/qN2MHMVqJK3hKVWGfhHytOT3IWNsGkNh7sAE=";
   } + "/linux";
 in lib.overrideDerivation (buildLinux (args // {
   inherit (linux) src version;
