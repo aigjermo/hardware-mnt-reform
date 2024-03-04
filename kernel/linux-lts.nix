@@ -3,7 +3,7 @@
 with lib;
 
 buildLinux (args // rec {
-  version = "6.1.79";
+  version = "6.1.80";
 
   # modDirVersion needs to be x.y.z, will automatically add .0 if needed
   majorVersion = lib.head (splitVersion version);
@@ -14,6 +14,6 @@ buildLinux (args // rec {
 
   src = fetchurl {
     url = "mirror://kernel/linux/kernel/v${majorVersion}.x/linux-${version}.tar.xz";
-    sha256 = "sha256-+qScoi+1XtTVyipV4H3RDk4XHPw7klaKYxRTzSBos5s=";
+    sha256 = "sha256-Vo7KrruLh8fIJGu6Z7yDQClyvzT1gRZRotPNVI/3tnE=";
   };
 } // (args.argsOverride or {}))
