@@ -78,6 +78,7 @@ Prepare partitions:
       parted /dev/mmcblk0 mklabel gpt
       parted /dev/mmcblk0 mkpart BOOT ext4 0% 100%
       mkfs.ext4 /dev/mmcblk0p1
+      mkdir /mnt/boot
       mount /dev/mmcblk0p1 /mnt/boot
     ```
   </details>
