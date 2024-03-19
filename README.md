@@ -2,7 +2,7 @@
 
 Requires an aarch64 host and Nix with [flake support](https://www.tweag.io/blog/2020-05-25-flakes/).
 
-First, install MNT Reform Debian to an NVMe drive and `apt upgrade`. In theory, it should be possible to build from an SD card and an external SSD, but I have not had success with that configuration in practice. A 12GB swapfile is necessary to build the NixOS SD image, assuming a module with 4GB of RAM. Putting the swapfile on an SD card will destroy it before the build is finished. My attempt with an external SSD, meanwhile, did not destroy the drive, but did fail with a strange error message.
+Assuming you're building this on the MNT Reform itself, you should first install MNT Reform Debian to an NVMe drive and `apt upgrade`. In theory, it should be possible to build from an SD card and an external SSD, but I have not had success with that configuration in practice. A 12GB swapfile is necessary to build the NixOS SD image, assuming a module with 4GB of RAM. Putting the swapfile on an SD card will destroy it before the build is finished. My attempt with an external SSD, meanwhile, did not destroy the drive, but did fail with a strange error message.
 
 Once booted with the NVMe, set up the swapfile:
 ```
