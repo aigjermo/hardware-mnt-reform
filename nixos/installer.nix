@@ -1,10 +1,10 @@
+{ ubootPkg }:
 { config, lib, pkgs, modulesPath, ... }:
-
 {
   imports = [
     (modulesPath + "/profiles/base.nix")
     (modulesPath + "/profiles/installation-device.nix")
-    ./sd-image.nix
+    (import ./sd-image.nix { inherit ubootPkg; })
   ];
 
   hardware.opengl.enable = true; # Needed for Wayland compositors

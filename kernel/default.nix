@@ -1,12 +1,15 @@
+{ version, module }:
 { stdenv, lib, buildLinux, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
 
 let
   inherit linux;
   reformKernel = fetchgit {
     url = "https://source.mnt.re/reform/reform-debian-packages.git";
-    rev = "d4bbc527b264a4cc7fefb20ee2459c84a2154c3c";
-    sha256 = "sha256-tOZbZv/qN2MHMVqJK3hKVWGfhHytOT3IWNsGkNh7sAE=";
+    rev = "0698154c5cfeae0fa44454c9bcdcd1aa57f4d0f0";
+    hash = "sha256-83TxrJws4YgUEEqvMZzphpIsK5g21AY8Hss7K4h4Ssc=";
   } + "/linux";
+  version = "6.7";
+  module = "meson-g12b-bananapi-cm4-mnt-reform2";
 in lib.overrideDerivation (buildLinux (args // {
   inherit (linux) src version;
 
@@ -16,7 +19,7 @@ in lib.overrideDerivation (buildLinux (args // {
   } // (args.features or { });
 
   kernelPatches = let
-    patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches6.1";
+    patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches${version}/${module}";
     reformPatches = map (patch: { inherit patch; }) patches;
   in lib.lists.unique (kernelPatches ++ reformPatches ++ [
     {
@@ -30,9 +33,21 @@ in lib.overrideDerivation (buildLinux (args // {
 
 } // (args.argsOverride or { }))) (attrs: {
   postPatch = attrs.postPatch + ''
-    cp ${reformKernel}/*.dts arch/arm64/boot/dts/freescale/
-    echo 'dtb-$(CONFIG_ARCH_MXC) += imx8mq-mnt-reform2.dtb imx8mq-mnt-reform2-hdmi.dtb' >> \
-      arch/arm64/boot/dts/freescale/Makefile
+    cp ${reformKernel}/fsl-ls1028*.dts arch/arm64/boot/dts/freescale/
+    cp ${reformKernel}/imx8m*.dts arch/arm64/boot/dts/freescale/
+    cp ${reformKernel}/meson*.dts arch/arm64/boot/dts/amlogic/
+    sed -i '/fsl-ls1028a-rdb.dtb/a dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-mnt-reform2.dtb' arch/arm64/boot/dts/freescale/Makefile
+    sed -i '/imx8mq-mnt-reform2.dtb/a dtb-$(CONFIG_ARCH_MXC) += imx8mq-mnt-reform2-hdmi.dtb' arch/arm64/boot/dts/freescale/Makefile
+
+    #   DTC     arch/arm64/boot/dts/freescale/imx8mp-mnt-pocket-reform.dtb
+    # Error: ../arch/arm64/boot/dts/freescale/imx8mp-mnt-pocket-reform.dts:799.1-8 Label or path lcdif3 not found
+    # Error: ../arch/arm64/boot/dts/freescale/imx8mp-mnt-pocket-reform.dts:803.1-10 Label or path hdmi_pvi not found
+    # Error: ../arch/arm64/boot/dts/freescale/imx8mp-mnt-pocket-reform.dts:807.1-9 Label or path hdmi_tx not found
+    # Error: ../arch/arm64/boot/dts/freescale/imx8mp-mnt-pocket-reform.dts:813.1-13 Label or path hdmi_tx_phy not found
+    # FATAL ERROR: Syntax error parsing input tree 
+
+    # Commenting out the sed line below due to the errors above.
+    #sed -i '/imx8mq-mnt-reform2.dtb/a dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb' arch/arm64/boot/dts/freescale/Makefile
   '';
   makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x40480000" ];
 })

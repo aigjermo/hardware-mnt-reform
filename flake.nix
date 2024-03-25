@@ -6,31 +6,39 @@
 
   outputs = { self, nixpkgs }:
     let
+      latestKernel = "6.7.10";
+      kernelBranch = (nixpkgs.lib.versions.majorVersion latestKernel) + "." + (nixpkgs.lib.versions.minorVersion latestKernel);
       nixpkgs' = nixpkgs.legacyPackages.aarch64-linux;
-      installer = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [ self.nixosModule ./nixos/installer.nix ];
-      };
       asound-state = "/var/lib/alsa/asound.state";
       alsa-state-daemon-conf = "/etc/alsa/state-daemon.conf";
     in {
-
       overlay = final: prev:
         {
-          linux = prev.callPackage ./kernel/linux-lts.nix {
+          linux = prev.callPackage ./kernel/linux-stable.nix {
             kernelPatches = [
               final.kernelPatches.bridge_stp_helper
               final.kernelPatches.request_key_helper
             ];
           };
 
-          linux_reformNitrogen8m_latest =
-            prev.callPackage ./kernel { kernelPatches = [ ]; };
+          linux_reformImx8mq_latest =
+            prev.callPackage
+              (import ./kernel { version=kernelBranch; module="imx8mq-mnt-reform2"; })
+              { kernelPatches = [ ]; };
 
-          linuxPackages_reformNitrogen8m_latest =
-            final.linuxPackagesFor final.linux_reformNitrogen8m_latest;
+          linuxPackages_reformImx8mq_latest =
+            final.linuxPackagesFor final.linux_reformImx8mq_latest;
 
-          ubootReformImx8mq = prev.callPackage ./uboot { };
+          linux_reformA311d_latest =
+            prev.callPackage
+              (import ./kernel { version=kernelBranch; module="meson-g12b-bananapi-cm4-mnt-reform2"; })
+              { kernelPatches = [ ]; };
+
+          linuxPackages_reformA311d_latest =
+            final.linuxPackagesFor final.linux_reformA311d_latest;
+
+          ubootReformImx8mq = prev.callPackage ./imx8mq/uboot { };
+          ubootReformA311d = prev.callPackage ./a311d/uboot { };
 
           reformFirmware = prev.callPackages ./firmware.nix {
             avrStdenv = prev.pkgsCross.avr.stdenv;
@@ -41,13 +49,12 @@
 
       legacyPackages.aarch64-linux = nixpkgs'.extend self.overlay;
 
-      nixosModule = { config, lib, pkgs, ... }:
-
+        
+      nixosModule = { dtb, kernelPkg }: { config, lib, pkgs, ... }:
         {
           boot = {
 
-            kernelPackages =
-              lib.mkDefault pkgs.linuxPackages_reformNitrogen8m_latest;
+            kernelPackages = lib.mkDefault kernelPkg;
 
             # Kernel params and modules are chosen to match the original System
             # image (v3).
@@ -65,22 +72,41 @@
             # custom script from the official system image:
             # https://source.mnt.re/reform/reform-tools/-/blob/c189f5ebb166d61c5f17c15a3c94fdb871cfb5c2/initramfs-tools/reform
             initrd.kernelModules = [
-              "nwl-dsi"
-              "imx-dcss"
-              "reset_imx7"
-              "mux_mmio"
-              "fixed"
-              "i2c-imx"
-              "fan53555"
-              "i2c_mux_pca954x"
+              # imx8mq-mnt-reform2
               "pwm_imx27"
-              "pwm_bl"
-              "panel_edp"
-              "ti_sn65dsi86"
-              "phy-fsl-imx8-mipi-dphy"
+              "nwl-dsi"
+              "ti-sn65dsi86"
+              "imx-dcss"
+              "panel-edp"
+              "mux-mmio"
               "mxsfb"
               "usbhid"
               "imx8mq-interconnect"
+              # meson-g12b-bananapi-cm4-mnt-reform2
+              "meson_dw_hdmi"
+              "meson_dw_mipi_dsi"
+              "meson_canvas"
+              "meson_drm"
+              "dw_hdmi_i2s_audio"
+              "dw_mipi_dsi"
+              "meson_dw_mipi_dsi"
+              "meson_vdec"
+              "ao_cec_g12a"
+              "panfrost"
+              "snd_soc_meson_g12a_tohdmimix"
+              "dw_hdmi_i2s_audio"
+              "cec"
+              "snd_soc_hdmi_codec"
+              "snd_soc_meson_codec_glue"
+              "snd_soc_meson_axg_toddr"
+              "snd_pcm"
+              "snd"
+              "display_connector"
+              # ls1028a
+              "cdns_mhdp_imx"
+              "cdns_mhdp_drmcore"
+              "mali_dp"
+
               "nvme"
             ];
 
@@ -111,8 +137,7 @@
 
           environment.systemPackages = with pkgs; [ alsa-utils brightnessctl usbutils ];
 
-          hardware.deviceTree.name =
-            lib.mkDefault "freescale/imx8mq-mnt-reform2.dtb";
+          hardware.deviceTree.name = lib.mkDefault dtb;
 
           hardware.pulseaudio.daemon.config.default-sample-rate =
             lib.mkDefault "48000";
@@ -299,11 +324,45 @@
           '';
         };
 
-      packages.aarch64-linux = {
-        inherit (installer.config.system.build) kernel initialRamdisk sdImage;
+      packages.aarch64-linux = 
+      let
+        installer = {dtb, ubootPkg, kernelPkg}: nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            (self.nixosModule { inherit dtb kernelPkg; })
+            (import ./nixos/installer.nix { inherit ubootPkg; })
+          ];
+        };
+
+        installers = {
+          a311d = installer {
+            dtb = "amlogic/meson-g12b-bananapi-cm4-mnt-reform2.dtb";
+            ubootPkg = self.legacyPackages.aarch64-linux.ubootReformA311d;
+            kernelPkg = self.legacyPackages.aarch64-linux.linuxPackages_reformA311d_latest;
+          };
+          imx8mq = installer {
+          dtb = "freescale/imx8mq-mnt-reform2.dtb";
+            kernelPkgs = self.legacyPackages.aarch64-linux.linuxPackages_reformImx8mq_latest;
+            ubootPkg = self.legacyPackages.aarch64-linux.ubootReformImx8mq;
+          };
+        };
+      in
+      {
+        imx8mq = {
+          inherit (installers.imx8mq.config.system.build) initialRamdisk kernel sdImage;
+        };
+        a311d = {
+          inherit (installers.a311d.config.system.build) initialRamdisk kernel sdImage;
+        };
       } // self.legacyPackages.aarch64-linux.reformFirmware;
 
-      defaultPackage.aarch64-linux = self.packages.aarch64-linux.sdImage;
+      defaultPackage.aarch64-linux = builtins.abort ''
+        
+        Please specify a Reform module and build target!
 
+        Examples:
+        - nix build .#imx8mq.sdImage
+        - nix build .#a311d.sdImage
+      '';
     };
 }

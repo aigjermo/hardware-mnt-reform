@@ -3,7 +3,7 @@
 with lib;
 
 buildLinux (args // rec {
-  version = "6.6.22";
+  version = "6.7-rc8";
 
   # modDirVersion needs to be x.y.z, will automatically add .0 if needed
   majorVersion = lib.head (splitVersion version);
@@ -13,7 +13,7 @@ buildLinux (args // rec {
   extraMeta.branch = versions.majorMinor version;
 
   src = fetchurl {
-    url = "mirror://kernel/linux/kernel/v${majorVersion}.x/linux-${version}.tar.xz";
-    hash = "sha256-I+PntWQHJQ9UEb2rlXY9C8TjoZ36Qx2VHffqyr1hovQ=";
+    url = "https://git.kernel.org/torvalds/t/linux-${version}.tar.gz";
+    sha256 = "sha256-QwbLsbM7L9Z6htmj5Pq6mpVBM5jD2c9XmR7peACgZAo=";
   };
 } // (args.argsOverride or {}))
