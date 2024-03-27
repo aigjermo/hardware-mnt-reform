@@ -36,6 +36,7 @@
 
           linuxPackages_reformA311d_latest =
             final.linuxPackagesFor final.linux_reformA311d_latest;
+            
 
           ubootReformImx8mq = prev.callPackage ./imx8mq/uboot { };
           ubootReformA311d = prev.callPackage ./a311d/uboot { };
@@ -44,7 +45,6 @@
             avrStdenv = prev.pkgsCross.avr.stdenv;
             armEmbeddedStdenv = prev.pkgsCross.arm-embedded.stdenv;
           };
-
         };
 
       legacyPackages.aarch64-linux = nixpkgs'.extend self.overlay;
@@ -337,11 +337,11 @@
         installers = {
           a311d = installer {
             dtb = "amlogic/meson-g12b-bananapi-cm4-mnt-reform2.dtb";
-            ubootPkg = self.legacyPackages.aarch64-linux.ubootReformA311d;
             kernelPkg = self.legacyPackages.aarch64-linux.linuxPackages_reformA311d_latest;
+            ubootPkg = self.legacyPackages.aarch64-linux.ubootReformA311d;
           };
           imx8mq = installer {
-          dtb = "freescale/imx8mq-mnt-reform2.dtb";
+            dtb = "freescale/imx8mq-mnt-reform2.dtb";
             kernelPkgs = self.legacyPackages.aarch64-linux.linuxPackages_reformImx8mq_latest;
             ubootPkg = self.legacyPackages.aarch64-linux.ubootReformImx8mq;
           };

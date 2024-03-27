@@ -1,5 +1,5 @@
 { version, module }:
-{ stdenv, lib, buildLinux, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
+{ stdenv, lib, linuxManualConfig, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
 
 let
   inherit linux;
@@ -10,7 +10,7 @@ let
   } + "/linux";
   version = "6.7";
   module = "meson-g12b-bananapi-cm4-mnt-reform2";
-in lib.overrideDerivation (buildLinux (args // {
+in lib.overrideDerivation (linuxManualConfig {
   inherit (linux) src version;
 
   features = {
@@ -20,18 +20,23 @@ in lib.overrideDerivation (buildLinux (args // {
 
   kernelPatches = let
     patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches${version}/${module}";
-    reformPatches = map (patch: { inherit patch; }) patches;
+    reformPatches = map (patch: { inherit patch; name=patch; }) patches;
   in lib.lists.unique (kernelPatches ++ reformPatches ++ [
     {
       name = "MNT-Reform-imx8mq-config-upstream";
       patch = null;
-      extraConfig = builtins.readFile ./kernel-config;
     }
   ]);
 
+  #extraConfig = builtins.readFile ./kernel-config;
+  configfile = ./config-6.7.9-reform2-arm64;
+  #enableParallelBuilding = true;
+  #ignoreConfigErrors = true;
+  #autoModules = false;
+  #kernelPreferBuiltin = true;
   allowImportFromDerivation = true;
 
-} // (args.argsOverride or { }))) (attrs: {
+}) (attrs: {
   postPatch = attrs.postPatch + ''
     cp ${reformKernel}/fsl-ls1028*.dts arch/arm64/boot/dts/freescale/
     cp ${reformKernel}/imx8m*.dts arch/arm64/boot/dts/freescale/
@@ -49,5 +54,6 @@ in lib.overrideDerivation (buildLinux (args // {
     # Commenting out the sed line below due to the errors above.
     #sed -i '/imx8mq-mnt-reform2.dtb/a dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb' arch/arm64/boot/dts/freescale/Makefile
   '';
-  makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x40480000" ];
+  #makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x40480000" ];
+  makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x1000000" ];
 })
