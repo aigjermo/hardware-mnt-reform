@@ -1,5 +1,5 @@
 { version, module }:
-{ stdenv, lib, linuxManualConfig, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
+{ stdenv, lib, buildLinux, fetchurl, fetchgit, linux, kernelPatches, ... }@args:
 
 let
   inherit linux;
@@ -10,7 +10,7 @@ let
   } + "/linux";
   version = "6.7";
   module = "meson-g12b-bananapi-cm4-mnt-reform2";
-in lib.overrideDerivation (linuxManualConfig {
+in lib.overrideDerivation (buildLinux (args // {
   inherit (linux) src version;
 
   features = {
@@ -28,15 +28,14 @@ in lib.overrideDerivation (linuxManualConfig {
     }
   ]);
 
-  #extraConfig = builtins.readFile ./kernel-config;
-  configfile = ./config-6.7.9-reform2-arm64;
+  extraConfig = builtins.readFile ./kernel-config;
   #enableParallelBuilding = true;
   #ignoreConfigErrors = true;
   #autoModules = false;
   #kernelPreferBuiltin = true;
   allowImportFromDerivation = true;
 
-}) (attrs: {
+} // (args.argsOverride or { }))) (attrs: {
   postPatch = attrs.postPatch + ''
     cp ${reformKernel}/fsl-ls1028*.dts arch/arm64/boot/dts/freescale/
     cp ${reformKernel}/imx8m*.dts arch/arm64/boot/dts/freescale/
@@ -53,6 +52,16 @@ in lib.overrideDerivation (linuxManualConfig {
 
     # Commenting out the sed line below due to the errors above.
     #sed -i '/imx8mq-mnt-reform2.dtb/a dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb' arch/arm64/boot/dts/freescale/Makefile
+  #sed -i 's/CONFIG_BACKLIGHT_PWM=./CONFIG_BACKLIGHT_PWM=y/' arch/arm64/configs/defconfig
+  #sed -i 's/CONFIG_BACKLIGHT_LP855X=./CONFIG_BACKLIGHT_LP855X=y/' arch/arm64/configs/defconfig
+  #echo "CONFIG_BACKLIGHT_CLASS_DEVICE=y" >> arch/arm64/configs/defconfig
+  '';
+  postConfig = ''
+   Avoid "Repeated Question" errors
+  sed -i 's/BACKLIGHT_CLASS_DEVICE=./BACKLIGHT_CLASS_DEVICE=y/' .config
+  sed -i 's/DRM_PANEL_JDI_LT070ME05000=./DRM_PANEL_JDI_LT070ME05000=y/' .config
+  sed -i 's/DWMAC_MESON=./DWMAC_MESON=y/' .config
+  echo "Post-config done!"
   '';
   #makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x40480000" ];
   makeFlags = attrs.makeFlags ++ [ "LOADADDR=0x1000000" ];

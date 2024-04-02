@@ -59,13 +59,20 @@
             # Kernel params and modules are chosen to match the original System
             # image (v3).
             # See [gentoo wiki](https://wiki.gentoo.org/wiki/MNT_Reform#u-boot).
+            #kernelParams = [
+            #  "console=ttymxc0,115200"
+            #  "console=tty1"
+            #  "pci=nomsi"
+            #  "cma=512M"
+            #  "no_console_suspend"
+            #  "ro"
+            #];
             kernelParams = [
-              "console=ttymxc0,115200"
+              "console=ttyAML0,115200"
               "console=tty1"
-              "pci=nomsi"
-              "cma=512M"
-              "no_console_suspend"
-              "ro"
+              "pci=pcie_bus_perf"
+              "libata.force=noncq"
+              "nvme_core.default_ps_max_latency_us=0"
             ];
 
             # The module load order is significant, It is derived from this
@@ -81,7 +88,7 @@
               "mux-mmio"
               "mxsfb"
               "usbhid"
-              "imx8mq-interconnect"
+              #"imx8mq-interconnect"
               # meson-g12b-bananapi-cm4-mnt-reform2
               "meson_dw_hdmi"
               "meson_dw_mipi_dsi"
@@ -93,7 +100,7 @@
               "meson_vdec"
               "ao_cec_g12a"
               "panfrost"
-              "snd_soc_meson_g12a_tohdmimix"
+              "snd_soc_meson_g12a_tohdmitx"
               "dw_hdmi_i2s_audio"
               "cec"
               "snd_soc_hdmi_codec"
@@ -101,26 +108,28 @@
               "snd_soc_meson_axg_toddr"
               "snd_pcm"
               "snd"
+              #"panel_jdi_lt070me05000"
+              #"pwm_bl"
               "display_connector"
               # ls1028a
-              "cdns_mhdp_imx"
-              "cdns_mhdp_drmcore"
+              #"cdns_mhdp_imx"
+              #"cdns_mhdp_drmcore"
               "mali_dp"
 
               "nvme"
             ];
 
             # hack to remove ATA modules
-            initrd.availableKernelModules = lib.mkForce ([
-              "cryptd"
-              "dm_crypt"
-              "dm_mod"
-              "input_leds"
-              "mmc_block"
-              "nvme"
-              "usbhid"
-              "xhci_hcd"
-            ] ++ config.boot.initrd.luks.cryptoModules);
+            #initrd.availableKernelModules = lib.mkForce ([
+            #  "cryptd"
+            #  "dm_crypt"
+            #  "dm_mod"
+            #  "input_leds"
+            #  "mmc_block"
+            #  "nvme"
+            #  "usbhid"
+            #  "xhci_hcd"
+            #] ++ config.boot.initrd.luks.cryptoModules);
 
             loader = {
               generic-extlinux-compatible.enable = lib.mkDefault true;
