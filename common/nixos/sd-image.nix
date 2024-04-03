@@ -1,7 +1,6 @@
 # The derivation for the SD image will be placed in
 # config.system.build.sdImage
 
-{ ubootPkg }:
 { config, lib, pkgs, modulesPath, ... }:
 
 with lib;
@@ -72,6 +71,31 @@ in {
       '';
     };
 
+    ubootPackage = mkOption {
+      type = types.package;
+      description = ''
+        uboot package to use in the SD card image.
+      '';
+    };
+
+    dd = mkOption {
+      type = types.submodule {
+        options = {
+          bs = mkOption {
+            type = types.string;
+            default = "512";
+          };
+          seek = mkOption {
+            type = types.string;
+            default = "0";
+          };
+          skip = mkOption {
+            type = types.string;
+            default = "0";
+          };
+        };
+      };
+    };
   };
 
   config = {
@@ -84,7 +108,7 @@ in {
 
     sdImage.storePaths = [ config.system.build.toplevel ];
 
-    system.build.uboot = ubootPkg;
+    system.build.uboot = config.sdImage.ubootPackage;
 
     system.build.sdImage = pkgs.callPackage
       ({ runCommand, dosfstools, e2fsprogs, mtools, libfaketime, utillinux }:
@@ -119,10 +143,7 @@ in {
           dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
           # install u-boot
-          #imx8mq
-          #dd conv=notrunc if=${ubootPkg}/flash.bin of=$img bs=1k seek=33
-          #a311d
-          dd conv=notrunc if=${ubootPkg}/flash.bin of=$img bs=512 skip=1 seek=1
+          dd conv=notrunc if=${config.sdImage.ubootPackage}/flash.bin of=$img bs=${config.sdImage.dd.bs} skip=${config.sdImage.dd.skip} seek=${config.sdImage.dd.seek}
 
           test -n "$compressCommand" && $compressCommand $img
 
