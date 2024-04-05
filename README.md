@@ -1,46 +1,31 @@
-# Bootable NixOS SD image
-
-|[Download latest image](https://nightly.link/nix-community/hardware-mnt-reform/workflows/image/master/nixos-mnt-reform.zip)|
+# Build a bootable NixOS SD image
 
 Requires an aarch64 host and Nix with [flake support](https://www.tweag.io/blog/2020-05-25-flakes/).
 
-<details>
-  <summary>Use flakes (required)</summary>
+Assuming you're building this on the MNT Reform itself, you should first install MNT Reform Debian to an NVMe drive and `apt upgrade`. In theory, it should be possible to build from an SD card and an external SSD, but I have not had success with that configuration in practice. A 12GB swapfile is necessary to build the NixOS SD image, assuming a module with 4GB of RAM. Putting the swapfile on an SD card will destroy it before the build is finished. My attempt with an external SSD, meanwhile, did not destroy the drive, but did fail with a strange error message.
 
-  ```
-    mkdir -p ~/.config/nix
-    echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
-    nix-shell -p nixUnstable
-  ```
-</details>
-
-<details>
-  <summary>Use nix-community binary cache (recommended)</summary>
-
-  Configure for the current user:
-  ```
-    nix run nixpkgs#cachix -- use nix-community -m user-nixconf -v
-  ```
-
-  Generate a configuration for system-wide installation:
-  ```
-    sudo nix run nixpkgs#cachix -- use nix-community -m nixos -v
-  ```
-</details>
-
-## Describe
+Once booted with the NVMe, set up the swapfile:
 ```
-nix flake show "git+https://codeberg.org/lykso/hardware-mnt-reform"
-nix flake list-inputs "git+https://codeberg.org/lykso/hardware-mnt-reform"
+sudo dd if=/dev/zero of=/swapfile bs=4M count=3072
+sudo mkswap /swapfile
+sudo chmod 0600 /swapfile
+sudo swapon /swapfile
 ```
 
-## Build
+Install Nix and configure it to use flakes:
 ```
-nix build "git+https://codeberg.org/lykso/hardware-mnt-reform" -L
-readlink result
+sh <(curl -L https://nixos.org/nix/install) --daemon
+mkdir -p ~/.config/nix
+echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
 ```
 
-## Flash
+Build the SD image in a nix shell:
+```
+nix-shell -p nixUnstable
+nix build git+https://codeberg.org/lykso/hardware-mnt-reform -L
+```
+
+## Flash the resulting image to an SD card
 ```
 bzcat ./result/sd-image/nixos-sd-image-*-aarch64-linux.img.bz2 > /dev/mmcblk1
 ```
@@ -93,6 +78,7 @@ Prepare partitions:
       parted /dev/mmcblk0 mklabel gpt
       parted /dev/mmcblk0 mkpart BOOT ext4 0% 100%
       mkfs.ext4 /dev/mmcblk0p1
+      mkdir /mnt/boot
       mount /dev/mmcblk0p1 /mnt/boot
     ```
   </details>
