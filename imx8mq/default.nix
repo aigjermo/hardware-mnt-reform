@@ -19,7 +19,7 @@ in
   sdImage.ubootPackage = pkgs.ubootReformImx8mq;
   sdImage.dd = {
     bs = "1k";
-    skip = "33";
+    seek = "33";
   };
 
   boot = {
