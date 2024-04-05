@@ -1,19 +1,12 @@
 { lib, config, pkgs, versions, ... }@args:
 let
-  latestKernel = "6.7.12";
-  kernelBranch = (versions.majorVersion latestKernel) + "." + (versions.minorVersion latestKernel);
+  kernel = "6.7.12";
   overlay = final: prev:
   {
-    linux_reformImx8mq_latest =
-      prev.callPackage
-        (import ../kernel { version=kernelBranch; module="imx8mq-mnt-reform2"; ubootLoadAddr="0x40480000"; })
-        { kernelPatches = [ ]; };
-
-    linuxPackages_reformImx8mq_latest =
-      final.linuxPackagesFor final.linux_reformImx8mq_latest;
-
+    linux_reformImx8mq_latest = prev.callPackage ./kernel.nix { kernelPatches = [ ]; };
+    linuxPackages_reformImx8mq_latest = final.linuxPackagesFor final.linux_reformImx8mq_latest;
     ubootReformImx8mq = prev.callPackage ./uboot { };
-  }
+  };
 in
 {
   imports = [
