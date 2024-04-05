@@ -23,7 +23,7 @@ in
 
   nixpkgs.overlays = [ overlay ];
 
-  sdImage.ubootPackage = nixpkgs.ubootReformImx8mq;
+  sdImage.ubootPackage = pkgs.ubootReformImx8mq;
   sdImage.dd = {
     bs = "1k";
     skip = "33";

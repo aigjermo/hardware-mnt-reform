@@ -23,7 +23,7 @@
         ];
       };
 
-      imx8mq_nixosModule = import ./imq8mx;
+      imx8mq_nixosModule = import ./imx8mq;
       a311d_nixosModule = import ./a311d;
 
       packages.aarch64-linux = 
