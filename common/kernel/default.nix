@@ -1,4 +1,4 @@
-{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.7.12", ... }@args:
+{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.7.12", hash ? "sha256-bCl545SIBqDbrLoZP4RT6kLBecHrn2E248Ndh+VweYQ=", ... }@args:
 let
   branch = lib.versions.majorMinor version;
 
@@ -13,8 +13,8 @@ let
     extraMeta.branch = branch;
 
     src = fetchurl {
+      inherit hash;
       url = "mirror://kernel/linux/kernel/v${majorVersion}.x/linux-${version}.tar.xz";
-      hash = "sha256-bCl545SIBqDbrLoZP4RT6kLBecHrn2E248Ndh+VweYQ=";
     };
   } // (args.argsOverride or {}));
 
@@ -37,7 +37,10 @@ in
     # branchVersion needs to be x.y
     extraMeta.branch = branch;
     kernelPatches = let
-      patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}/${soc}";
+      patches = if branch == "6.1" then
+          lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}"
+        else
+          lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}/${soc}";
       reformPatches = map (patch: { inherit patch; name=patch; }) patches;
     in lib.lists.unique (kernelPatches ++ reformPatches);
     features = {

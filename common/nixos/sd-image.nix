@@ -82,15 +82,15 @@ in {
       type = types.submodule {
         options = {
           bs = mkOption {
-            type = types.string;
+            type = types.str;
             default = "512";
           };
           seek = mkOption {
-            type = types.string;
+            type = types.str;
             default = "0";
           };
           skip = mkOption {
-            type = types.string;
+            type = types.str;
             default = "0";
           };
         };
@@ -140,10 +140,10 @@ in {
 
           # Copy the rootfs into the SD image
           eval $(partx $img -o START,SECTORS --nr 1 --pairs)
-          dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
+          dd conv=fsync,notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
           # install u-boot
-          dd conv=notrunc if=${config.sdImage.ubootPackage}/flash.bin of=$img bs=${config.sdImage.dd.bs} skip=${config.sdImage.dd.skip} seek=${config.sdImage.dd.seek}
+          dd conv=fsync,notrunc if=${config.sdImage.ubootPackage}/flash.bin of=$img bs=${config.sdImage.dd.bs} skip=${config.sdImage.dd.skip} seek=${config.sdImage.dd.seek}
 
           test -n "$compressCommand" && $compressCommand $img
 
