@@ -4,13 +4,6 @@ let
   alsa-state-daemon-conf = "/etc/alsa/state-daemon.conf";
   overlay = final: prev:
     {
-  #    linux = prev.callPackage ../kernel/linux-stable.nix {
-  #      kernelPatches = [
-  #        final.kernelPatches.bridge_stp_helper
-  #        final.kernelPatches.request_key_helper
-  #      ];
-  #    };
-
       reformFirmware = prev.callPackages ../firmware.nix {
         avrStdenv = prev.pkgsCross.avr.stdenv;
         armEmbeddedStdenv = prev.pkgsCross.arm-embedded.stdenv;

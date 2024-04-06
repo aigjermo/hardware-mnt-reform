@@ -1,6 +1,5 @@
 { lib, config, pkgs, ... }@args:
 let
-  kernel = "6.7.12";
   overlay = final: prev:
   {
     linux_reformA311d_latest = prev.callPackage ./kernel.nix { kernelPatches = [ ]; };

@@ -1,6 +1,5 @@
 { lib, config, pkgs, versions, ... }@args:
 let
-  kernel = "6.7.12";
   overlay = final: prev:
   {
     linux_reformImx8mq_latest = prev.callPackage ./kernel.nix { kernelPatches = [ ]; };
@@ -38,70 +37,33 @@ in
     initrd.kernelModules = [
       "nwl-dsi"
       "imx-dcss"
-      "pwm_imx27"
       "reset_imx7"
-      "ti-sn65dsi86"
-      "phy-fsl-imx8-mipi-dphy"
-      "panel-edp"
-      "mux-mmio"
+      "mux_mmio"
       "fixed"
       "i2c-imx"
       "fan53555"
       "i2c_mux_pca954x"
+      "pwm_imx27"
+      "pwm_bl"
+      "panel_edp"
+      "ti_sn65dsi86"
+      "phy-fsl-imx8-mipi-dphy"
       "mxsfb"
       "usbhid"
       "imx8mq-interconnect"
-      "meson_dw_hdmi"
-      "meson_dw_mipi_dsi"
-      "meson_canvas"
-      "meson_drm"
-      "dw_hdmi_i2s_audio"
-      "dw_mipi_dsi"
-      "meson_dw_mipi_dsi"
-      "meson_vdec"
-      "ao_cec_g12a"
-      "panfrost"
-      "snd_soc_meson_g12a_tohdmitx"
-      "dw_hdmi_i2s_audio"
-      "cec"
-      "snd_soc_hdmi_codec"
-      "snd_soc_meson_codec_glue"
-      "snd_soc_meson_axg_toddr"
-      "snd_pcm"
-      "snd"
-      "display_connector"
       "nvme"
     ];
-    #initrd.kernelModules = [
-    #  "nwl-dsi"
-    #  "imx-dcss"
-    #  "reset_imx7"
-    #  "mux_mmio"
-    #  "fixed"
-    #  "i2c-imx"
-    #  "fan53555"
-    #  "i2c_mux_pca954x"
-    #  "pwm_imx27"
-    #  "pwm_bl"
-    #  "panel_edp"
-    #  "ti_sn65dsi86"
-    #  "phy-fsl-imx8-mipi-dphy"
-    #  "mxsfb"
-    #  "usbhid"
-    #  "imx8mq-interconnect"
-    #  "nvme"
-    #];
-    ## hack to remove ATA modules
-    #initrd.availableKernelModules = lib.mkForce ([
-    #  "cryptd"
-    #  "dm_crypt"
-    #  "dm_mod"
-    #  "input_leds"
-    #  "mmc_block"
-    #  "nvme"
-    #  "usbhid"
-    #  "xhci_hcd"
-    #] ++ config.boot.initrd.luks.cryptoModules);
+    # hack to remove ATA modules
+    initrd.availableKernelModules = lib.mkForce ([
+      "cryptd"
+      "dm_crypt"
+      "dm_mod"
+      "input_leds"
+      "mmc_block"
+      "nvme"
+      "usbhid"
+      "xhci_hcd"
+    ] ++ config.boot.initrd.luks.cryptoModules);
   };
   hardware.deviceTree.name = lib.mkDefault "freescale/imx8mq-mnt-reform2.dtb";
 }
