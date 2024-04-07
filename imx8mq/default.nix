@@ -15,12 +15,6 @@ in
 
   nixpkgs.overlays = [ overlay ];
 
-  sdImage.ubootPackage = pkgs.ubootReformImx8mq;
-  sdImage.dd = {
-    bs = "1k";
-    seek = "33";
-  };
-
   boot = {
     # Kernel params and modules are chosen to match the original System image (v3).
     # See [gentoo wiki](https://wiki.gentoo.org/wiki/MNT_Reform#u-boot).

@@ -15,13 +15,6 @@ in
 
   nixpkgs.overlays = [ overlay ];
 
-  sdImage.ubootPackage = pkgs.ubootReformA311d;
-  sdImage.dd = {
-    bs = "512";
-    seek = "1";
-    skip = "1";
-  };
-
   boot = {
     kernelParams = [
       "console=ttyAML0,115200"

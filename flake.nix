@@ -46,10 +46,26 @@
       in
       {
         imx8mq = {
-          inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
+          inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel;
+          sdImage = imx8mqInstaller.config.system.build.sdImage // {
+            ubootPackage = nixpkgs.ubootReformImx8mq;
+            dd = {
+              bs = "1k";
+              seek = "33";
+            };
+          };
         };
+
         a311d = {
-          inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
+          inherit (a311dInstaller.config.system.build) initialRamdisk kernel;
+          sdImage = a311dInstaller.config.system.build.sdImage // {
+            ubootPackage = nixpkgs.ubootReformA311d;
+            dd = {
+              bs = "512";
+              seek = "1";
+              skip = "1";
+            };
+          };
         };
 
         default = builtins.abort ''
