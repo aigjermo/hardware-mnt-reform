@@ -32,7 +32,7 @@
           system = "aarch64-linux";
           modules = [
             self.a311d_nixosModule
-            ./common/nixos/installer.nix
+            ./a311d/nixos/sd-image.nix
           ];
         };
 
@@ -40,32 +40,17 @@
           system = "aarch64-linux";
           modules = [
             self.imx8mq_nixosModule
-            ./common/nixos/installer.nix
+            ./imx8mq/nixos/sd-image.nix
           ];
         };
       in
       {
         imx8mq = {
-          inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel;
-          sdImage = imx8mqInstaller.config.system.build.sdImage // {
-            ubootPackage = nixpkgs.ubootReformImx8mq;
-            dd = {
-              bs = "1k";
-              seek = "33";
-            };
-          };
+          inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
         };
 
         a311d = {
-          inherit (a311dInstaller.config.system.build) initialRamdisk kernel;
-          sdImage = a311dInstaller.config.system.build.sdImage // {
-            ubootPackage = nixpkgs.ubootReformA311d;
-            dd = {
-              bs = "512";
-              seek = "1";
-              skip = "1";
-            };
-          };
+          inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
         };
 
         default = builtins.abort ''
