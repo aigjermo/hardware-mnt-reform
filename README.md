@@ -28,7 +28,7 @@ nix-shell -p nixUnstable
 # For the IMX8MQ module:
 nix build git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.sdImage -L
 # For the A311D module:
-nix build git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.sdImage -L
+nix build git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.sdImage -L
 ```
 
 ## Flash the resulting image to an SD card
