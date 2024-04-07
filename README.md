@@ -136,8 +136,8 @@ nixos-generate-config --root /mnt
           system = "aarch64-linux";
           modules = [
             # Uncomment the NixOS module matching the module in your Reform.
-            # reform.imx8mq_nixosModule # For IMX8MQ
-            # reform.a311d_nixosModule # For A311D
+            # reform.imx8mq.nixosModule # For IMX8MQ
+            # reform.a311d.nixosModule # For A311D
             ./configuration.nix
             ({ pkgs, ... }: {
               nix.package = pkgs.nixFlakes;

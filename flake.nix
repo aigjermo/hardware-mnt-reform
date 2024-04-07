@@ -7,6 +7,22 @@
   outputs = { self, nixpkgs }:
     let
       nixpkgs' = nixpkgs.legacyPackages.aarch64-linux;
+
+      a311dInstaller = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.a311d.nixosModule
+          ./a311d/nixos/sd-image.nix
+        ];
+      };
+
+      imx8mqInstaller = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.imx8mq.nixosModule
+          ./imx8mq/nixos/sd-image.nix
+        ];
+      };
     in
     {
       nixpkgs = {
@@ -23,36 +39,19 @@
         ];
       };
 
-      imx8mq_nixosModule = import ./imx8mq;
-      a311d_nixosModule = import ./a311d;
+      imx8mq = {
+        inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
+        nixosModule = import ./imx8mq;
+      };
 
-      packages.aarch64-linux = 
-      let
-        a311dInstaller = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [
-            self.a311d_nixosModule
-            ./a311d/nixos/sd-image.nix
-          ];
-        };
+      a311d = {
+        inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
+        nixosModule = import ./a311d;
+      };
 
-        imx8mqInstaller = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [
-            self.imx8mq_nixosModule
-            ./imx8mq/nixos/sd-image.nix
-          ];
-        };
-      in
-      {
-        imx8mq = {
-          inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
-        };
-
-        a311d = {
-          inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
-        };
-
+      packages.aarch64-linux = {
+        imx8mq = self.imx8mq;
+        a311d = self.a311d;
         default = builtins.abort ''
           Please specify a Reform module and build target!
 
