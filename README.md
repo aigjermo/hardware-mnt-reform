@@ -1,3 +1,5 @@
+WARNING: There is no binary cache at the moment for the Linux kernels this flake uses. This flake will build the Linux kernel from source, which can take 12 hours or more on an IMX8MQ. The A311D module is roughly three times faster, in my experience, but 4 hours is still a long time to wait for something to compile.
+
 # Build a bootable NixOS SD image
 
 Requires an aarch64 host and Nix with [flake support](https://www.tweag.io/blog/2020-05-25-flakes/).
@@ -22,7 +24,11 @@ echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
 Build the SD image in a nix shell:
 ```
 nix-shell -p nixUnstable
-nix build git+https://codeberg.org/lykso/hardware-mnt-reform -L
+# Choose the build command matching the module in your Reform.
+# For the IMX8MQ module:
+nix build git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.sdImage -L
+# For the A311D module:
+nix build git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.sdImage -L
 ```
 
 ## Flash the resulting image to an SD card
@@ -114,7 +120,7 @@ nixos-generate-config --root /mnt
 <details>
   <summary>Configuration (required)</summary>
 
-  Add a flake file at `/mnt/etc/nixos/flake.nix` to import configuration from this repository:
+  Add a flake file at `/mnt/etc/nixos/flake.nix` to import configuration from this repository. Be sure to uncomment the `modules` line corresponding to the module in your Reform:
   ```
     {
       description = "Configuration for MNT Reform";
@@ -129,7 +135,9 @@ nixos-generate-config --root /mnt
         nixosConfigurations.reform = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           modules = [
-            reform.nixosModule
+            # Uncomment the NixOS module matching the module in your Reform.
+            # reform.imx8mq_nixosModule # For IMX8MQ
+            # reform.a311d_nixosModule # For A311D
             ./configuration.nix
             ({ pkgs, ... }: {
               nix.package = pkgs.nixFlakes;
@@ -148,7 +156,7 @@ Start installation:
 nixos-install --verbose --impure --flake /mnt/etc/nixos#reform
 ```
 
-Shutdown the machine, and flip the DIP switch on the Nitrogen8M_SOM module (under the heatsink). After this step, MNT Reform will boot from NVMe without an SD card. Don't forget to enable binary cache to avoid compiling kernels on the device itself.
+If using the IMX8MQ module, shutdown the machine, and flip the DIP switch on the Nitrogen8M_SOM module (under the heatsink). After this step, MNT Reform will boot from NVMe without an SD card.
 
 For more information see the  [NixOS manual](https://nixos.org/manual/nixos/stable/#sec-installation)
 
