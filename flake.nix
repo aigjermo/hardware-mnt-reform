@@ -23,20 +23,29 @@
           ./imx8mq/nixos/sd-image.nix
         ];
       };
+
+      overlay = final: prev: {
+        linux = (prev.callPackage ./common/kernel.nix {
+          kernelPatches = [
+            final.kernelPatches.bridge_stp_helper
+            final.kernelPatches.request_key_helper
+          ];
+        }).linux;
+
+        # callPackages is not well-documented. Here's what I found:
+        # https://github.com/NixOS/nixpkgs/issues/36354#issuecomment-776859596
+        reformFirmware = prev.callPackages ./common/firmware.nix {
+          avrStdenv = prev.pkgsCross.avr.stdenv;
+          armEmbeddedStdenv = prev.pkgsCross.arm-embedded.stdenv;
+        };
+      };
     in
     {
+      legacyPackages.aarch64-linux = nixpkgs'.extend overlay;
+
       nixpkgs = {
         system = "aarch64-linux";
-        overlays = [
-          (final: prev: {
-            linux = (prev.callPackage ./common/kernel.nix {
-              kernelPatches = [
-                final.kernelPatches.bridge_stp_helper
-                final.kernelPatches.request_key_helper
-              ];
-            }).linux;
-          })
-        ];
+        overlays = [ overlay ];
       };
 
       imx8mq = {
@@ -59,6 +68,6 @@
           - nix build .#imx8mq.sdImage
           - nix build .#a311d.sdImage
         '';
-      };# // self.legacyPackages.aarch64-linux.reformFirmware;
+      } // self.legacyPackages.aarch64-linux.reformFirmware;
     };
 }
