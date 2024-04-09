@@ -4,7 +4,7 @@ let
   {
     linux_reformA311d_latest = prev.callPackage ./kernel.nix { kernelPatches = [ ]; };
     linuxPackages_reformA311d_latest = final.linuxPackagesFor final.linux_reformA311d_latest;
-    ubootReformA311d = prev.callPackage ./uboot.nix { };
+    ubootReformA311d = prev.callPackage ./uboot { };
   };
 in
 {
