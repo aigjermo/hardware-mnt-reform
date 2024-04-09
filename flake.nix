@@ -7,303 +7,67 @@
   outputs = { self, nixpkgs }:
     let
       nixpkgs' = nixpkgs.legacyPackages.aarch64-linux;
-      installer = nixpkgs.lib.nixosSystem {
+
+      a311dInstaller = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
-        modules = [ self.nixosModule ./nixos/installer.nix ];
+        modules = [
+          self.a311d.nixosModule
+          ./a311d/nixos/sd-image.nix
+        ];
       };
-      asound-state = "/var/lib/alsa/asound.state";
-      alsa-state-daemon-conf = "/etc/alsa/state-daemon.conf";
-    in {
 
-      overlay = final: prev:
-        {
-          linux = prev.callPackage ./kernel/linux-lts.nix {
-            kernelPatches = [
-              final.kernelPatches.bridge_stp_helper
-              final.kernelPatches.request_key_helper
-            ];
-          };
+      imx8mqInstaller = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.imx8mq.nixosModule
+          ./imx8mq/nixos/sd-image.nix
+        ];
+      };
 
-          linux_reformNitrogen8m_latest =
-            prev.callPackage ./kernel { kernelPatches = [ ]; };
+      overlay = final: prev: {
+        linux = (prev.callPackage ./common/kernel.nix {
+          kernelPatches = [
+            final.kernelPatches.bridge_stp_helper
+            final.kernelPatches.request_key_helper
+          ];
+        }).linux;
 
-          linuxPackages_reformNitrogen8m_latest =
-            final.linuxPackagesFor final.linux_reformNitrogen8m_latest;
-
-          ubootReformImx8mq = prev.callPackage ./uboot { };
-
-          reformFirmware = prev.callPackages ./firmware.nix {
-            avrStdenv = prev.pkgsCross.avr.stdenv;
-            armEmbeddedStdenv = prev.pkgsCross.arm-embedded.stdenv;
-          };
-
+        # callPackages is not well-documented. Here's what I found:
+        # https://github.com/NixOS/nixpkgs/issues/36354#issuecomment-776859596
+        reformFirmware = prev.callPackages ./common/firmware.nix {
+          avrStdenv = prev.pkgsCross.avr.stdenv;
+          armEmbeddedStdenv = prev.pkgsCross.arm-embedded.stdenv;
         };
+      };
+    in
+    {
+      legacyPackages.aarch64-linux = nixpkgs'.extend overlay;
 
-      legacyPackages.aarch64-linux = nixpkgs'.extend self.overlay;
+      nixpkgs = {
+        system = "aarch64-linux";
+        overlays = [ overlay ];
+      };
 
-      nixosModule = { config, lib, pkgs, ... }:
+      imx8mq = {
+        inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
+        nixosModule = import ./imx8mq;
+      };
 
-        {
-          boot = {
-
-            kernelPackages =
-              lib.mkDefault pkgs.linuxPackages_reformNitrogen8m_latest;
-
-            # Kernel params and modules are chosen to match the original System
-            # image (v3).
-            # See [gentoo wiki](https://wiki.gentoo.org/wiki/MNT_Reform#u-boot).
-            kernelParams = [
-              "console=ttymxc0,115200"
-              "console=tty1"
-              "pci=nomsi"
-              "cma=512M"
-              "no_console_suspend"
-              "ro"
-            ];
-
-            # The module load order is significant, It is derived from this
-            # custom script from the official system image:
-            # https://source.mnt.re/reform/reform-tools/-/blob/c189f5ebb166d61c5f17c15a3c94fdb871cfb5c2/initramfs-tools/reform
-            initrd.kernelModules = [
-              "nwl-dsi"
-              "imx-dcss"
-              "reset_imx7"
-              "mux_mmio"
-              "fixed"
-              "i2c-imx"
-              "fan53555"
-              "i2c_mux_pca954x"
-              "pwm_imx27"
-              "pwm_bl"
-              "panel_edp"
-              "ti_sn65dsi86"
-              "phy-fsl-imx8-mipi-dphy"
-              "mxsfb"
-              "usbhid"
-              "imx8mq-interconnect"
-              "nvme"
-            ];
-
-            # hack to remove ATA modules
-            initrd.availableKernelModules = lib.mkForce ([
-              "cryptd"
-              "dm_crypt"
-              "dm_mod"
-              "input_leds"
-              "mmc_block"
-              "nvme"
-              "usbhid"
-              "xhci_hcd"
-            ] ++ config.boot.initrd.luks.cryptoModules);
-
-            loader = {
-              generic-extlinux-compatible.enable = lib.mkDefault true;
-              grub.enable = lib.mkDefault false;
-              timeout = lib.mkDefault 2;
-            };
-            supportedFilesystems = lib.mkForce [ "vfat" "f2fs" "ntfs" "cifs" ];
-          };
-
-          boot.kernel.sysctl."vm.swappiness" = lib.mkDefault 1;
-
-          environment.etc."systemd/system.conf".text =
-            "DefaultTimeoutStopSec=15s";
-
-          environment.systemPackages = with pkgs; [ alsa-utils brightnessctl usbutils ];
-
-          hardware.deviceTree.name =
-            lib.mkDefault "freescale/imx8mq-mnt-reform2.dtb";
-
-          hardware.pulseaudio.daemon.config.default-sample-rate =
-            lib.mkDefault "48000";
-
-          nixpkgs = {
-            system = "aarch64-linux";
-            overlays = [ self.overlay ];
-          };
-
-          programs.sway.extraPackages = # unbloat
-            lib.mkDefault (with pkgs; [ swaylock swayidle xwayland ]);
-
-          services.fstrim.enable = lib.mkDefault true;
-
-          system.activationScripts.asound = ''
-            if [ ! -e "/var/lib/alsa/asound.state" ]; then
-              mkdir -p /var/lib/alsa
-              cp ${./initial-asound.state} /var/lib/alsa/asound.state
-            fi
-          '';
-
-          services.udev.extraRules = ''
-          ACTION=="add", SUBSYSTEM=="sound", KERNEL=="card*", ATTRS{id}=="wm8960audio", ENV{PULSE_PROFILE_SET}="reform.conf"
-          ACTION=="add", SUBSYSTEM=="sound", KERNEL=="controlC*", KERNELS!="card*", TEST="${pkgs.alsa-utils}", TEST="${asound-state}, GOTO="alsa_restore_go", GOTO="alsa_restore_end"
-
-          LABEL="alsa_restore_go"
-          TEST!="${alsa-state-daemon-conf}",RUN+="${pkgs.alsa-utils}/bin/alsactl restore $attr{device/number}"
-          TEST=="${alsa-state-daemon-conf}",RUN+="${pkgs.alsa-utils}/bin/alsactl nrestore $attr{device/number}"
-
-          LABEL="alsa_restore_end"
-          '';
-
-          systemd.services.alsa-restore = {
-            description="Save and restore ALSA mixer state";
-            unitConfig = {
-              ConditionPathExists = "!${alsa-state-daemon-conf}";
-              ConditionPathExistsGlob = "/dev/snd/control*";
-            };
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = "-${pkgs.alsa-utils}/bin/alsactl -d -f ${asound-state} restore";
-              ExecStop = "-${pkgs.alsa-utils}/bin/alsactl -d -f ${asound-state} store";
-            };
-          };
-          systemd.services.alsa-state = {
-            description="Save and restore ALSA mixer state while respecting ${alsa-state-daemon-conf})";
-            unitConfig = {
-              ConditionPathExists = "${alsa-state-daemon-conf}";
-              ConditionPathExistsGlob = "/dev/snd/control*";
-            };
-            serviceConfig = {
-              Type = "simple";
-              ExecStart = "-${pkgs.alsa-utils}/bin/alsactl -d -s -n 19 -c rdaemon";
-              ExecStop = "-${pkgs.alsa-utils}/bin/alsactl -d -s kill save_and_quit";
-            };
-          };
-
-          environment.etc."pulse/reform.conf".text = ''
-          [General]
-          auto-profiles = yes
-
-          [Mapping stereo-out]
-          device-strings = hw:%f
-          fallback = yes
-          channel-map = left,right
-          paths-output = analog-output analog-output-speaker analog-output-headphones
-          direction = output
-          priority = 1
-
-          [Mapping headset-mono-in]
-          device-strings = hw:%f
-          fallback = yes
-          channel-map = mono
-          paths-input = analog-input-reform
-          direction = input
-          priority = 1
-
-          [Profile output:stereo-out+input:mono-in]
-          description = MNT Reform
-          output-mappings = stereo-out
-          input-mappings = headset-mono-in
-          '';
-
-          environment.etc."pulse/analog-input-reform.conf".text = ''
-          # This file is part of PulseAudio.
-          #
-          # PulseAudio is free software; you can redistribute it and/or modify
-          # it under the terms of the GNU Lesser General Public License as
-          # published by the Free Software Foundation; either version 2.1 of the
-          # License, or (at your option) any later version.
-          #
-          # PulseAudio is distributed in the hope that it will be useful, but
-          # WITHOUT ANY WARRANTY; without even the implied warranty of
-          # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-          # General Public License for more details.
-          #
-          # You should have received a copy of the GNU Lesser General Public License
-          # along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
-
-          ; Analog input path for MNT Reform, which has a headset mic input
-          ; that is only on the left channel (mono).
-
-          [General]
-          priority = 100
-
-          [Element Capture]
-          switch = mute
-          volume = ignore
-
-          [Element Mic]
-          required-absent = any
-
-          [Element Mic Boost]
-          required-absent = any
-
-          [Element Dock Mic]
-          required-absent = any
-
-          [Element Dock Mic Boost]
-          required-absent = any
-
-          [Element Front Mic]
-          required-absent = any
-
-          [Element Front Mic Boost]
-          required-absent = any
-
-          [Element Int Mic]
-          required-absent = any
-
-          [Element Int Mic Boost]
-          required-absent = any
-
-          [Element Internal Mic]
-          required-absent = any
-
-          [Element Internal Mic Boost]
-          required-absent = any
-
-          [Element Rear Mic]
-          required-absent = any
-
-          [Element Rear Mic Boost]
-          required-absent = any
-
-          [Element Headset]
-          required-absent = any
-
-          [Element Headset Mic]
-          required-absent = any
-
-          [Element Headset Mic Boost]
-          required-absent = any
-
-          [Element Headphone Mic]
-          required-absent = any
-
-          [Element Headphone Mic Boost]
-          required-absent = any
-
-          [Element Line]
-          required-absent = any
-
-          [Element Line Boost]
-          required-absent = any
-
-          [Element Aux]
-          required-absent = any
-
-          [Element Video]
-          required-absent = any
-
-          [Element Mic/Line]
-          required-absent = any
-
-          [Element TV Tuner]
-          required-absent = any
-
-          [Element FM]
-          required-absent = any
-
-          .include analog-input.conf.common
-          '';
-        };
+      a311d = {
+        inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
+        nixosModule = import ./a311d;
+      };
 
       packages.aarch64-linux = {
-        inherit (installer.config.system.build) kernel initialRamdisk sdImage;
+        imx8mq = self.imx8mq;
+        a311d = self.a311d;
+        default = builtins.abort ''
+          Please specify a Reform module and build target!
+
+          Examples:
+          - nix build .#imx8mq.sdImage
+          - nix build .#a311d.sdImage
+        '';
       } // self.legacyPackages.aarch64-linux.reformFirmware;
-
-      defaultPackage.aarch64-linux = self.packages.aarch64-linux.sdImage;
-
     };
 }

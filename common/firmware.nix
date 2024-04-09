@@ -1,6 +1,4 @@
-{ lib, stdenv, fetchgit, dfu-programmer, runtimeShell, gcc
-
-, armEmbeddedStdenv, avrStdenv }:
+{ lib, stdenv, fetchgit, dfu-programmer, runtimeShell, gcc, armEmbeddedStdenv, avrStdenv }:
 
 let
   version = "2021-06-10";
@@ -46,7 +44,6 @@ let
     }) boardRevs);
 
 in boardBuilds // {
-
   reform2-keyboard-fw = avrStdenv.mkDerivation rec {
     pname = "reform2-keyboard-fw";
     inherit version src;
@@ -70,5 +67,4 @@ in boardBuilds // {
       runHook postInstall
     '';
   };
-
 }

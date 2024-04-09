@@ -71,6 +71,31 @@ in {
       '';
     };
 
+    ubootPackage = mkOption {
+      type = types.package;
+      description = ''
+        uboot package to use in the SD card image.
+      '';
+    };
+
+    dd = mkOption {
+      type = types.submodule {
+        options = {
+          bs = mkOption {
+            type = types.str;
+            default = "512";
+          };
+          seek = mkOption {
+            type = types.str;
+            default = "0";
+          };
+          skip = mkOption {
+            type = types.str;
+            default = "0";
+          };
+        };
+      };
+    };
   };
 
   config = {
@@ -83,7 +108,7 @@ in {
 
     sdImage.storePaths = [ config.system.build.toplevel ];
 
-    system.build.uboot = pkgs.ubootReformImx8mq;
+    system.build.uboot = config.sdImage.ubootPackage;
 
     system.build.sdImage = pkgs.callPackage
       ({ runCommand, dosfstools, e2fsprogs, mtools, libfaketime, utillinux }:
@@ -115,10 +140,10 @@ in {
 
           # Copy the rootfs into the SD image
           eval $(partx $img -o START,SECTORS --nr 1 --pairs)
-          dd conv=notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
+          dd conv=fsync,notrunc if=./root-fs.img of=$img seek=$START count=$SECTORS
 
-          # install u-boot for i.MX8M
-          dd conv=notrunc if=${pkgs.ubootReformImx8mq}/flash.bin of=$img bs=1k seek=33
+          # install u-boot
+          dd conv=fsync,notrunc if=${config.sdImage.ubootPackage}/flash.bin of=$img bs=${config.sdImage.dd.bs} skip=${config.sdImage.dd.skip} seek=${config.sdImage.dd.seek}
 
           test -n "$compressCommand" && $compressCommand $img
 
