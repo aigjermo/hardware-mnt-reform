@@ -1,5 +1,7 @@
 WARNING: There is no binary cache at the moment for the Linux kernels this flake uses. This flake will build the Linux kernel from source, which can take 12 hours or more on an IMX8MQ. The A311D module is roughly three times faster, in my experience, but 4 hours is still a long time to wait for something to compile.
 
+Also, the A311D module does not show the generation selection menu at the moment, due to u-boot being unable to bring up the screen. To recover from an unbootable configuration with this module, you'll have to either use the serial console or attempt to blindly select a prior generation.
+
 # Build a bootable NixOS SD image
 
 Requires an aarch64 host and Nix with [flake support](https://www.tweag.io/blog/2020-05-25-flakes/).
