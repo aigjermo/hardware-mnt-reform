@@ -24,15 +24,4 @@ buildUBoot rec {
     cp ${reform}/*.dts source/arch/arm/dts/
     cp ${reform}/*_defconfig source/configs/
   '';
-
-  postBuild = ''
-    #make -j$(nproc) #TODO: Don't use all cores unless asked!
-    #env --chdir=../fip ./build-fip.sh bananapi-cm4io ../u-boot/u-boot.bin mnt-reform2-a311d
-    #cp fip/mnt-reform2-a311d/u-boot.bin.sd.bin $out/flash.bin
-    #dd if=/dev/zero of=$out/flash.bin bs=512 count=1 conv=notrunc
-    #printf @AML | cmp --bytes=4 --ignore-initial=0:528 - $out/flash.bin
-    #printf MNTREFORMAMLBOOT | dd of=$out/flash.bin bs=512 conv=notrunc seek=1
-    #printf @AML | cmp --bytes=4 --ignore-initial=0:492048 - $out/flash.bin
-    #printf MNTREFORMAMLBOOT | dd of=$out/flash.bin bs=512 conv=notrunc seek=961
-  '';
 }
