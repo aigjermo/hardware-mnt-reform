@@ -109,7 +109,11 @@ Prepare partitions:
 
 Flash bootloader:
 ```
-  nix build "git+https://codeberg.org/lykso/hardware-mnt-reform#ubootReformImx8mq
+  # For the IMX8MQ module:
+  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.reform-uboot' -L
+  # For the A311D module:
+  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.reform-uboot' -L
+
   echo 0 > /sys/class/block/mmcblk0boot0/force_ro
   dd if=result/flash.bin of=/dev/mmcblk0boot0 bs=1024 seek=33
 ```
