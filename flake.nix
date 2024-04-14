@@ -51,11 +51,13 @@
       imx8mq = {
         inherit (imx8mqInstaller.config.system.build) initialRamdisk kernel sdImage;
         nixosModule = import ./imx8mq;
+        reform-uboot = nixpkgs'.callPackage ./imx8mq/uboot { };
       };
 
       a311d = {
         inherit (a311dInstaller.config.system.build) initialRamdisk kernel sdImage;
         nixosModule = import ./a311d;
+        reform-uboot = nixpkgs'.callPackage ./a311d/uboot { };
       };
 
       packages.aarch64-linux = {
