@@ -140,13 +140,13 @@ echo 0 > /sys/class/block/mmcblk0boot0/force_ro
 Flash bootloader:
 ```
   # For the IMX8MQ module:
-  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.reform-uboot' -L
+  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.reform-uboot' -L --no-write-lock-file
   dd if=result/flash.bin of=$UBOOTDEV bs=1024 seek=33
 
   # For the A311D module:
   # WARNING: FLASHING TO THE EMMC AT THIS STEP CAN SOFT-BRICK YOUR A311D MODULE.
   # FLASHING TO THE EMMC ON THIS MODULE HAS NOT BEEN TESTED BY THE AUTHORS OF THIS README.
-  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.reform-uboot' -L
+  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.reform-uboot' -L --no-write-lock-file
   dd if=result/flash.bin of=$UBOOTDEV bs=512 seek=1 skip=1
 ```
 
