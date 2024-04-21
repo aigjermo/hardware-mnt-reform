@@ -123,7 +123,17 @@ echo 0 > /sys/class/block/mmcblk0boot0/force_ro
 
   # Mount the boot partition by UUID if using a USB to SD adapter or similar.
   # Otherwise, just mounting $BOOTPART at /mnt/boot is fine.
-  export BOOTUUID=$(blkid -o value --match-tag UUID $BOOTPART)
+  # Whatever device path is given is what will end up in the NixOS configuration generated in the next step.
+
+  # N.B.: The 'sudo' in the subcommand is important. blkid will return UUID of the
+  # first partition with a UUID it can find if it can't retrive the UUID of the given
+  # partition, which is likely if the command isn't run as root.
+  export BOOTUUID=$(sudo blkid -o value --match-tag UUID $BOOTPART)
+
+  # Be safe. Check that $BOOTUUID matches the UUID of the expected device.
+  echo "$BOOTUUID"
+  blkid $BOOTPART
+
   mount /dev/disk/by-uuid/$BOOTUUID /mnt/boot
 ```
 
