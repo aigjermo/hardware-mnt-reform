@@ -116,7 +116,8 @@ echo 0 > /sys/class/block/mmcblk0boot0/force_ro
 
 ```
   parted $BOOTDEV mklabel msdos
-  parted $BOOTDEV mkpart BOOT ext4 4MiB 100%
+  parted $BOOTDEV mkpart primary ext4 4MiB 100%
+  parted $BOOTDEV toggle 1 BOOT
   mkfs.ext4 $BOOTPART
   mkdir /mnt/boot
 
