@@ -1,6 +1,12 @@
-WARNING: There is no binary cache at the moment for the Linux kernels this flake uses. This flake will build the Linux kernel from source, which can take 12 hours or more on an IMX8MQ. The A311D module is roughly three times faster, in my experience, but 4 hours is still a long time to wait for something to compile.
+# Module statuses
 
-Also, the A311D module does not show the generation selection menu at the moment, due to u-boot being unable to bring up the screen. To recover from an unbootable configuration with this module, you'll have to either use the serial console or attempt to blindly select a prior generation.
+No LPC driver, suspend, or hibernate for any module yet. All modules are on the 6.7 (stable, but EOL) branch unless otherwise noted.
+
+- **IMX8MQ**: Display initialized in u-boot, hardware works. Linux kernel held back to the 6.1 (LTS) branch.
+- **A311D**: Display initialized after u-boot; generation selection must be done via serial console or by editing `/boot/extlinux/extlinux.conf`.
+- **LS1028A**: Boots, but display does not initialize. System can be interacted with via serial console or blindly via keyboard. Work-in-progress. Restricted to the `ls1028a` branch at this time.
+
+**WARNING:** There is no binary cache at the moment for the Linux kernels this flake uses. This flake will build the Linux kernel from source, which can take 12 hours or more on an IMX8MQ. The A311D module is roughly three times faster, in my experience, but 4 hours is still a long time to wait for something to compile.
 
 # Build a bootable NixOS SD image
 
@@ -72,8 +78,20 @@ This image contains a mutable NixOS installation that will initialize itself on 
 </details>
 
 Prepare partitions:
+
+The following instructions assume installation to an NVMe. The boot device can be either an SD card or the module's eMMC. Note, though, that [flashing the eMMC on the A311D can soft-brick it](https://community.mnt.re/t/nvme-boot-not-working-with-a311d/1942/12), so sticking with the SD card for that module is recommended. To use an SD card as the boot device, you will likely also need a USB SD card adapter^1.
+
+In the instructions below, $UBOOTDEV is assumed to be the path to your u-boot device, $BOOTDEV is assumed to be the path to the device your boot partition will be on, and $BOOTPART is assumed to be the path to your boot partition. E.g., /dev/mmcblk0boot0, /dev/mmcblk0, and /dev/mmcblk0p1, respectively, for the eMMC on the IMX8MQ. For installations targeting an SD card mounted by USB, $UBOOTDEV and $BOOTDEV should be the same.
+
+If installing to the eMMC on the IMX8MQ, make it writable first:
+```
+echo 0 > /sys/class/block/mmcblk0boot0/force_ro
+```
+
+^1 It may also be possible to use a USB stick for the boot device during the installation process, taking care to modify hardware-configuration.nix to point to the /dev/disk/by-uuid path of your target SD card's boot partition, then boot into the official image, unmount /boot and remove the SD card with the official image, mount your target SD card, and copy over everything from the USB stick. This approach has not yet been tested, though.
+
 * <details>
-    <summary>Encrypted (recommended)</summary>
+    <summary>Encrypted root partition (recommended)</summary>
 
     ```
       parted /dev/nvme0n1 mklabel gpt
@@ -82,40 +100,43 @@ Prepare partitions:
       cryptsetup open /dev/nvme0n1p1 nix
       mkfs.ext4 /dev/mapper/nix
       mount /dev/mapper/nix /mnt/
-
-      parted /dev/mmcblk0 mklabel gpt
-      parted /dev/mmcblk0 mkpart BOOT ext4 0% 100%
-      mkfs.ext4 /dev/mmcblk0p1
-      mkdir /mnt/boot
-      mount /dev/mmcblk0p1 /mnt/boot
     ```
   </details>
 
 * <details>
-    <summary>Plain text</summary>
+    <summary>Plain text root partition </summary>
 
     ```
       parted /dev/nvme0n1 mklabel gpt
       parted /dev/nvme0n1 mkpart NIX ext4 0% 100%
-      mkfs.ext4 /dev/nvme0n1
-      mount /dev/nvme0n1 /mnt
-
-      parted /dev/mmcblk0 mklabel gpt
-      parted /dev/mmcblk0 mkpart BOOT ext4 0% 100%
-      mkfs.ext4 /dev/mmcblk0p1
-      mount /dev/mmcblk0p1 /mnt/boot
+      mkfs.ext4 /dev/nvme0n1p1
+      mount /dev/nvme0n1p1 /mnt
     ```
   </details>
+
+```
+  parted $BOOTDEV mklabel msdos
+  parted $BOOTDEV mkpart BOOT ext4 4MiB 100%
+  mkfs.ext4 $BOOTPART
+  mkdir /mnt/boot
+
+  # Mount the boot partition by UUID if using a USB to SD adapter or similar.
+  # Otherwise, just mounting $BOOTPART at /mnt/boot is fine.
+  export BOOTUUID=$(blkid -o value --match-tag UUID $BOOTPART)
+  mount /dev/disk/by-uuid/$BOOTUUID /mnt/boot
+```
 
 Flash bootloader:
 ```
   # For the IMX8MQ module:
   nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.reform-uboot' -L
-  # For the A311D module:
-  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.reform-uboot' -L
+  dd if=result/flash.bin of=$UBOOTDEV bs=1024 seek=33
 
-  echo 0 > /sys/class/block/mmcblk0boot0/force_ro
-  dd if=result/flash.bin of=/dev/mmcblk0boot0 bs=1024 seek=33
+  # For the A311D module:
+  # WARNING: FLASHING TO THE EMMC AT THIS STEP CAN SOFT-BRICK YOUR A311D MODULE.
+  # FLASHING TO THE EMMC ON THIS MODULE HAS NOT BEEN TESTED BY THE AUTHORS OF THIS README.
+  nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.reform-uboot' -L
+  dd if=result/flash.bin of=$UBOOTDEV bs=512 seek=1 skip=1
 ```
 
 Generate basic configuration:
@@ -164,7 +185,15 @@ nixos-install --verbose --impure --flake /mnt/etc/nixos#reform
 
 If using the IMX8MQ module, shutdown the machine, and flip the DIP switch on the Nitrogen8M_SOM module (under the heatsink). After this step, MNT Reform will boot from NVMe without an SD card.
 
+# Upgrading
+
+```
+nixos-rebuild switch --recreate-lock-file --verbose --impure --flake /etc/nixos#reform
+```
+
 For more information see the  [NixOS manual](https://nixos.org/manual/nixos/stable/#sec-installation)
+
+N.B.: The rest of this README has not been tested or updated since the repository was forked.
 
 <details>
   <summary>How to upgrade</summary>
@@ -177,13 +206,6 @@ For more information see the  [NixOS manual](https://nixos.org/manual/nixos/stab
     echo 0 > /sys/class/block/mmcblk0boot0/force_ro
     dd if=result/flash.bin of=/dev/mmcblk0boot0 bs=1024 seek=33
   ```
-</details>
-
-<details>
-  <summary>Important notes</summary>
-
-  * There may be an issue with the early console with some kernel versions (e.g. I haven't managed to make it work on Linux v5.17.6 at the time of writing this). Just type the password blindly.
-  * You can choose the NixOS generation at the boot process with UART.
 </details>
 
 # Firmware
