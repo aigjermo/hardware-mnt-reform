@@ -1,4 +1,4 @@
-{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.7.12", hash ? "sha256-bCl545SIBqDbrLoZP4RT6kLBecHrn2E248Ndh+VweYQ=", ... }@args:
+{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.6.28", hash ? "sha256-gYcW7RPn26aq6uJOMHOZPiYIEu0SjRAnLpS5Iu5tM5Q=", ... }@args:
 let
   branch = lib.versions.majorMinor version;
 
@@ -73,13 +73,6 @@ in
 
       # Commenting out the sed line below due to the errors above.
       #sed -i '/imx8mq-mnt-reform2.dtb/a dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb' arch/arm64/boot/dts/freescale/Makefile
-    '';
-
-    postConfig = ''
-    # Avoid "Repeated Question" errors
-    sed -i 's/BACKLIGHT_CLASS_DEVICE=./BACKLIGHT_CLASS_DEVICE=y/' .config
-    sed -i 's/DRM_PANEL_JDI_LT070ME05000=./DRM_PANEL_JDI_LT070ME05000=y/' .config
-    sed -i 's/DWMAC_MESON=./DWMAC_MESON=y/' .config
     '';
   });
 }

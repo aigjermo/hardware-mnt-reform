@@ -30,6 +30,7 @@ in
       "ti-sn65dsi86"
       "imx-dcss"
       "panel-edp"
+      "panel-jdi-lt070me05000"
       "mux-mmio"
       "mxsfb"
       "usbhid"
