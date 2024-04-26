@@ -31,13 +31,15 @@ echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
 
 Build the SD image in a nix shell:
 ```
-nix-shell -p nixUnstable
+nix-shell -p nixStable git
 # Choose the build command matching the module in your Reform.
 # For the IMX8MQ module:
 nix build git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.sdImage -L
 # For the A311D module:
 nix build git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.sdImage -L
 ```
+
+If you would rather track the unstable branch of nix, feel free to replace `nixStable` with `nixUnstable` in the nix-shell command above.
 
 ## Flash the resulting image to an SD card
 ```
