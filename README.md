@@ -42,9 +42,14 @@ nix build git+https://codeberg.org/lykso/hardware-mnt-reform#a311d.sdImage -L
 If you would rather track the unstable branch of nix, feel free to replace `nixStable` with `nixUnstable` in the nix-shell command above.
 
 ## Flash the resulting image to an SD card
+
+Assuming the SD card is `/dev/mmcblk1` (as it is on the IMX8MQ; the A311D has it at `/dev/mmcblk0`):
+
 ```
-bzcat ./result/sd-image/nixos-sd-image-*-aarch64-linux.img.bz2 > /dev/mmcblk1
+bzcat ./result/sd-image/nixos-sd-image-*-aarch64-linux.img.bz2 | sudo dd of=/dev/mmcblk1 bs=8M status=progress
 ```
+
+If you're booted into a live image on an SD card, using a USB adapter will also work. Just substitute `/dev/mmcblk1` with its path. (E.g., `/dev/sda`)
 
 ## Boot
 
