@@ -1,6 +1,6 @@
 # Module statuses
 
-No LPC driver, suspend, or hibernate for any module yet. All modules are on the 6.7 (stable, but EOL) branch unless otherwise noted.
+No LPC driver, suspend, or hibernate for any module yet. All modules are on the 6.6 (LTS) branch of the Linux kernel unless otherwise noted.
 
 - **IMX8MQ**: Display initialized in u-boot, hardware works. Linux kernel held back to the 6.1 (LTS) branch.
 - **A311D**: Display initialized after u-boot; generation selection must be done via serial console or by editing `/boot/extlinux/extlinux.conf`.
