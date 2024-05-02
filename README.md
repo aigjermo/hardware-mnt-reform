@@ -49,7 +49,9 @@ Assuming the SD card is `/dev/mmcblk1` (as it is on the IMX8MQ; the A311D has it
 bzcat ./result/sd-image/nixos-sd-image-*-aarch64-linux.img.bz2 | sudo dd of=/dev/mmcblk1 bs=8M status=progress
 ```
 
-If you're booted into a live image on an SD card, using a USB adapter will also work. Just substitute `/dev/mmcblk1` with its path. (E.g., `/dev/sda`)
+If you're booted into a live image on an SD card, you can either use a USB adapter to flash to another SD card (just replace `/dev/mmcblk1` with, e.g., `/dev/sda`), or you can mount the live SD card itself to `/mnt/boot`, either by its UUID or by its label (e.g., `mount /dev/disk/by-label/NIXOS_SD /mnt/boot`).
+
+If you mount the live SD card to `/mnt/boot`, skip preparing the boot partition and flashing the bootloader.
 
 ## Boot
 
@@ -121,6 +123,8 @@ echo 0 > /sys/class/block/mmcblk0boot0/force_ro
     ```
   </details>
 
+Prepare the boot partition (skip if mounting the live SD card to /mnt/boot):
+
 ```
   parted $BOOTDEV mklabel msdos
   parted $BOOTDEV mkpart primary ext4 4MiB 100%
@@ -144,7 +148,7 @@ echo 0 > /sys/class/block/mmcblk0boot0/force_ro
   mount /dev/disk/by-uuid/$BOOTUUID /mnt/boot
 ```
 
-Flash bootloader:
+Flash bootloader (skip if mounting the live SD card to /mnt/boot):
 ```
   # For the IMX8MQ module:
   nix build 'git+https://codeberg.org/lykso/hardware-mnt-reform#imx8mq.reform-uboot' -L --no-write-lock-file
