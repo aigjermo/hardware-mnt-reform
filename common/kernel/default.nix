@@ -1,4 +1,4 @@
-{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.6.29", hash ? "sha256-fyb3TAgILIax2vhm5NScXYJ2zBkGqJ0ONn5FfsFny9A=", ... }@args:
+{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.6.30", hash ? "sha256-tmpbhjsPhmlEi3TKg71kGoVvFksplW5Tm7y1/e6rnMY=", ... }@args:
 let
   branch = lib.versions.majorMinor version;
 
