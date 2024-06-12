@@ -22,7 +22,7 @@ in
     kernelParams = [
       "ro"
       "no_console_suspend"
-      "console=ttymxc0,115200"
+      "earlycon=ec_imx6q,0x30860000,115200"
       "cma=512M"
       "pci=nomsi"
       "console=ttymxc0,115200"
