@@ -1,4 +1,4 @@
-{ stdenv, lib, config, buildLinux, fetchurl, fetchgit, linux, kernelPatches, modDirVersionArg ? null, version ? "6.6.33", hash ? "sha256-oT68INwqdXImmZSa90qoakzl1UTW2qpqfeToyBtA3pc=", ... }@args:
+{ stdenv, lib, buildLinux, fetchurl, fetchgit, kernelPatches, modDirVersionArg ? null, version ? "6.6.33", hash ? "sha256-oT68INwqdXImmZSa90qoakzl1UTW2qpqfeToyBtA3pc=", ... }@args:
 let
   branch = lib.versions.majorMinor version;
 
@@ -61,7 +61,7 @@ in
       iwlwifi = false;
     } // (args.features or { });
 
-    extraConfig = builtins.readFile ./kernel-config;
+    structuredExtraConfig = import ./kernel-config.nix { kernel = lib.kernel; };
     #enableParallelBuilding = true;
     #ignoreConfigErrors = true;
     #autoModules = false;
