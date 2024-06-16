@@ -1,0 +1,13 @@
+diff --git a/board/boundary/nitrogen8m_som/nitrogen8m_som.c b/board/boundary/nitrogen8m_som/nitrogen8m_som.c
+index 094af6cf64..f074d46246 100644
+--- a/board/boundary/nitrogen8m_som/nitrogen8m_som.c
++++ b/board/boundary/nitrogen8m_som/nitrogen8m_som.c
+@@ -368,7 +368,7 @@ static void set_env_vars(void)
+ 
+ 	// MNT Reform 2
+ 	env_set("fdt_addr_r", "0x50000000");
+-	env_set("ramdisk_addr_r", "0x44000000");
++	env_set("ramdisk_addr_r", "0x50200000");
+ #ifdef MNTREFORM_BOOT_RISCOS
+ 	env_set("bootcmd", "usb start; usb reset; ext4load mmc 1 ${loadaddr} /RISCOSIMX8M; go ${loadaddr} 32");
+ #else

@@ -11,7 +11,9 @@ buildUBoot rec {
   defconfig = "nitrogen8m_som_4g_defconfig";
   extraMeta.platforms = [ "aarch64-linux" ];
   filesToInstall = [ "flash.bin" ];
-  patches = [ ];
+  patches = [
+    ./reform-ramdisk-addr.patch
+  ];
   configurePhase = "cp mntreform-config .config";
   makeFlags = filesToInstall;
 }
