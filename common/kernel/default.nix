@@ -18,11 +18,27 @@ let
     };
   } // (args.argsOverride or {}));
 
-  reformKernel = fetchgit {
-    url = "https://source.mnt.re/reform/reform-debian-packages.git";
-    rev = "0698154c5cfeae0fa44454c9bcdcd1aa57f4d0f0";
-    hash = "sha256-83TxrJws4YgUEEqvMZzphpIsK5g21AY8Hss7K4h4Ssc=";
-  } + "/linux";
+  reformKernel = stdenv.mkDerivation {
+    name = "reform-debian-packages-patches";
+    src = fetchgit {
+      url = "https://source.mnt.re/reform/reform-debian-packages.git";
+      rev = "b7826966eee3453a33fb66d85cb279987080f53f";
+      hash = "sha256-ODK72WwZ1JzQF+hM2qG80UdDGUrr5C9OnxvTrOgBaD8=";
+    };
+    dontConfigure = true;
+    dontBuild = true;
+    postUnpack = ''
+      cd reform-debian-packages*
+      # Remove patch added in 6.6.33
+      sed -i "908,954d" linux/patches${branch}/meson-g12b-bananapi-cm4-mnt-reform2/0000-v9_20231124_neil_armstrong_drm_meson_add_support_for_mipi_dsi_display.patch
+      cd ..
+    '';
+    installPhase = ''
+      mkdir -p $out
+      cp -r linux/patches${branch} $out
+      cp linux/*.dts $out/
+    '';
+  };
 in
 {
   inherit linux;
@@ -37,10 +53,7 @@ in
     # branchVersion needs to be x.y
     extraMeta.branch = branch;
     kernelPatches = let
-      patches = if branch == "6.1" then
-          lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}"
-        else
-          lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}/${soc}";
+      patches = lib.filesystem.listFilesRecursive "${reformKernel}/patches${branch}";
       reformPatches = map (patch: { inherit patch; name=patch; }) patches;
     in lib.lists.unique (kernelPatches ++ reformPatches);
     features = {
